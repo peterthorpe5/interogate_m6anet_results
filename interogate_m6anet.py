@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+#
+# .py
 import os
 from collections import defaultdict
 import matplotlib.pyplot as plt
