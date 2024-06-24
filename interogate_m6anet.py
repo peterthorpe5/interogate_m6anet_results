@@ -18,6 +18,10 @@ from interogate.parse_gtf import parse_gff_gft
 from interogate.return_dict import generate_transcript_coordinates
 from interogate.parse_m6a_site_proba import identify_methylated_sites, query_transcript_exon
 from interogate.plot import plot_methylation_distribution
+from interogate.summary_stats import summarize_methylation_sites
+
+from scipy.stats import chi2_contingency
+
 
 print(" ...   libs loaded ...")
 
@@ -165,11 +169,13 @@ def main():
         print(f"Results saved to {output_file}")
 
 
-        # Example usage
+        # plot out the data usage
         output_plot = f"{os.path.splitext(m6a_file)[0]}_m6a_distribution.pdf"
         plot_methylation_distribution(results_df, output_plot)
 
- 
+        # write out a summary per transcript usage
+        output_summary = f"{os.path.splitext(m6a_file)[0]}_summary_per_transcript.tab"
+        summarize_methylation_sites(results_df, output_summary)
 
 
     logger.info("Processing finished: %s", time.asctime())
