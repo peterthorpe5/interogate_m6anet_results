@@ -42,6 +42,12 @@ def get_args():
                           type=str,
                           help="number of threads: currently does nothing yet")
     
+
+    optional.add_argument("--threshold", dest='threshold',
+                          action="store", default=0.9,
+                          type=float,
+                          help="theshold for m6a dat filtering. Default is recommended 0.9")
+    
     optional.add_argument("-o", "--out", dest='out',
                           action="store",
                           default="temp.out",
@@ -113,10 +119,10 @@ def main():
     
     for m6a_file in args.m6a:
         logger.info("Starting processing: %s", m6a_file)
-        threshold = 0.9
+        threshold = args.threshold
 
         methylated_sites = identify_methylated_sites(m6a_file, threshold)
-        print(methylated_sites)
+        # print(methylated_sites)
 
         # Determine exon/UTR location for each methylation site
         results = []
@@ -151,7 +157,7 @@ def main():
             results.append(result)
 
         results_df = pd.DataFrame(results)
-        print(results_df)
+        # print(results_df)
 
         # Print and save the result
         output_file = f"{os.path.splitext(m6a_file)[0]}_exon_annotated.tab"
@@ -172,58 +178,3 @@ if __name__ == '__main__':
     main()
 
 
-
-
-
-################################
-    TEST = '''
-print("These are now in the nose2 tests")
-###############################
-# TESTS
-# Query example
-query_transcript = "AT1G01010.1"
-query_position = 3
-exon_number, total_exons = query_transcript_exon(transcript_dict, query_transcript, query_position)
-
-if exon_number is not None:
-    print(f'Transcript {query_transcript} position {query_position} is in exon {exon_number}.')
-    print(f'Transcript {query_transcript} has {total_exons} exons.')
-else:
-    print(f'Position {query_position} is not found in transcript {query_transcript}.')
-
-# Query example2
-query_transcript = "AT1G01020.4"
-query_position = 426
-exon_number, total_exons = query_transcript_exon(transcript_dict, query_transcript, query_position)
-print("AT1G01020.4 should have 7 exons and position 426 that should be exon 4")
-if exon_number is not None:
-    print(f'Transcript {query_transcript} position {query_position} is in exon {exon_number}.')
-    print(f'Transcript {query_transcript} has {total_exons} exons.')
-else:
-    print(f'Position {query_position} is not found in transcript {query_transcript}.')
-
-
-# Query example3
-query_transcript = "AT1G01020.4"
-query_position = 860
-exon_number, total_exons = query_transcript_exon(transcript_dict, query_transcript, query_position)
-print("AT1G01020.4 should have 7 exons and position 860 should be exon 7")
-if exon_number is not None:
-    print(f'Transcript {query_transcript} position {query_position} is in exon {exon_number}.')
-    print(f'Transcript {query_transcript} has {total_exons} exons.')
-else:
-    print(f'Position {query_position} is not found in transcript {query_transcript}.')
-
-
-# Query example4
-query_transcript = "AT1G01020.4"
-query_position = 861
-exon_number, total_exons = query_transcript_exon(transcript_dict, query_transcript, query_position)
-print("AT1G01020.4 should have 7 exons and position 861 should BREAK!!!")
-if exon_number is not None:
-    print(f'Transcript {query_transcript} position {query_position} is in exon {exon_number}.')
-    print(f'Transcript {query_transcript} has {total_exons} exons.')
-else:
-    print(f'Position {query_position} is not found in transcript {query_transcript}.')
-
-    '''
