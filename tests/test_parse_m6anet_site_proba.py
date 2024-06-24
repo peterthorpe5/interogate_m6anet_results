@@ -10,6 +10,14 @@ import os
 from interogate.parse_m6a_site_proba import identify_methylated_sites
 
 
+# 3 exon 1, last exon and UTR
+test_data = """TEST.1,5,5,0.9662596747279167,TGACA,0.1395348837209302
+TEST.1,35,35,0.9662596747279167,TGACA,0.1395348837209302
+TEST.1,35,35,0.0662596747279167,TGACA,0.1395348837209302
+TEST.1,50,50,0.0662596747279167,TGACA,0.1395348837209302""".split()
+
+
+
 class TestIdentifyMethylatedSites(unittest.TestCase):
 
     def setUp(self):

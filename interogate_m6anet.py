@@ -17,6 +17,8 @@ import pandas as pd
 from interogate.parse_gtf import parse_gff_gft
 from interogate.return_dict import generate_transcript_coordinates
 from interogate.parse_m6a_site_proba import identify_methylated_sites, query_transcript_exon
+from interogate.plot import plot_methylation_distribution
+
 
 
 def get_args():
@@ -58,7 +60,6 @@ def get_args():
                           default="pipeline.log",
                           type=str,
                           help="log file name")
-    
     return parser.parse_args()
     
 
@@ -92,49 +93,65 @@ def main():
     # Example usage
     logger.info("Starting processing: %s", args.gtf )
     file_path = args.gtf  # Replace with the path to your GFF or GTF file
-    features = parse_gff_gft(file_path)
-    transcript_dict = generate_transcript_coordinates(features)
 
-    with open(args.out, 'w') as out_file:
-        for transcript, exons in transcript_dict.items():
-            for exon, coordinates in exons.items():
-                out_data = f'{transcript} exon {exon}: {coordinates}'
-                #out_file.write(out_data + '\n')
+    # Parse GTF file and generate transcript coordinates
+    file_path = args.gtf
+    features = parse_gff_gft(file_path)
+    transcript_dict, transcript_exon_counts, gene_exon_counts, \
+         last_exon_for_transcript = generate_transcript_coordinates(features)
     
-    # load m6anet data
+
+
+    #with open(args.out, 'w') as out_file:
+    #    for transcript, exons in transcript_dict.items():
+    #        for exon, coordinates in exons.items():
+    #            out_data = f'{transcript} exon {exon}: {coordinates}'
+    #            out_file.write(out_data + '\n')
+    #            print(out_data)
+
+   # Process each m6A result file
+    
     for m6a_file in args.m6a:
-        logger.info("Starting processing: %s",  args.m6a)
-        m6a_site_proba = m6a_file  # Replace with your actual file path
+        logger.info("Starting processing: %s", m6a_file)
         threshold = 0.9
 
-        methylated_sites = identify_methylated_sites(m6a_site_proba, 
-                                                     threshold)
+        methylated_sites = identify_methylated_sites(m6a_file, threshold)
         print(methylated_sites)
-               # Determine exon/UTR location for each methylation site
+
+        # Determine exon/UTR location for each methylation site
         results = []
         for index, row in methylated_sites.iterrows():
             transcript_id = row['transcript_id']
             position = row['transcript_position']
-            exon_number, total_exons = query_transcript_exon(transcript_dict, 
-                                                             transcript_id, 
-                                                             position)
+            exon_number, total_exons_in_transcript = query_transcript_exon(transcript_dict,
+                                                                            transcript_id, 
+                                                                            position)
+
             if exon_number is not None:
+                gene_id = transcript_id.split('.')[0]
+                total_exons_in_gene = gene_exon_counts.get(gene_id, 'Unknown')
+                is_last_exon = exon_number == last_exon_for_transcript.get(transcript_id)
                 result = {
                     'transcript_id': transcript_id,
                     'position': position,
                     'exon_number': exon_number,
-                    'total_exons': total_exons
+                    'total_exons_in_transcript': total_exons_in_transcript,
+                    'total_exons_in_gene': total_exons_in_gene,
+                    'is_last_exon': is_last_exon
                 }
             else:
                 result = {
                     'transcript_id': transcript_id,
                     'position': position,
                     'exon_number': 'UTR',
-                    'total_exons': total_exons
+                    'total_exons_in_transcript': total_exons_in_transcript,
+                    'total_exons_in_gene': 'Unknown',
+                    'is_last_exon': False
                 }
             results.append(result)
 
         results_df = pd.DataFrame(results)
+        print(results_df)
 
         # Print and save the result
         output_file = f"{os.path.splitext(m6a_file)[0]}_exon_annotated.tab"
@@ -142,10 +159,11 @@ def main():
         print(f"Results saved to {output_file}")
 
 
-    # Save the result to a file if needed
-    output_file = 'methylated_sites_above_threshold.tab'
-    methylated_sites.to_csv(output_file, index=False, sep="\t")
-    print(f"Methylated sites saved to {output_file}")
+        # Example usage
+        output_plot = f"{os.path.splitext(m6a_file)[0]}_m6a_distribution.pdf"
+        plot_methylation_distribution(results_df, output_plot)
+
+ 
 
 
     logger.info("Processing finished: %s", time.asctime())

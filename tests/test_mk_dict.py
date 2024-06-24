@@ -28,13 +28,15 @@ def query_transcript_exon(transcript_dict, transcript_id, position):
     if transcript_id in transcript_dict:
         for exon_number, coordinates in transcript_dict[transcript_id].items():
             if position in coordinates:
-                total_exons = len(transcript_dict[transcript_id])  # This gives the number of exons
+                total_exons = len(transcript_dict[transcript_id])  # This gives the number of exons in the transcript
                 return exon_number, total_exons
     return None, None
 
+# get the data and the dict
 file_path = 'data/test.gtf'  # Replace with the path to your GFF or GTF file
 features = parse_gff_gft(file_path)
-transcript_dict = generate_transcript_coordinates(features)
+transcript_dict, transcript_exon_counts, gene_exon_counts, \
+     last_exon_for_transcript = generate_transcript_coordinates(features)
 
 class TestTranscriptDict(unittest.TestCase):
 
@@ -50,55 +52,57 @@ class TestTranscriptDict(unittest.TestCase):
         else:
             print(f'Position {query_position} is not found in transcript {query_transcript}.')
         self.assertEqual(exon_number, 1)
-        self.assertEqual(query_transcript, "AT1G01010.1")
+        self.assertEqual(total_exons, transcript_exon_counts[query_transcript])
 
     def test_dict_1b(self):
         """Test 1b: AT1G01010.1 at pos 3 should be exon 1."""
         query_transcript = "AT1G01010.1"
         query_position = 3
         exon_number, total_exons = query_transcript_exon(transcript_dict, query_transcript, query_position)
-        self.assertEqual(query_transcript, "AT1G01010.1")
+        self.assertEqual(exon_number, 1)
+        self.assertEqual(total_exons, transcript_exon_counts[query_transcript])
 
     def test_dict_2(self):
-        """Test 2: AT1G01020 at pos 426 should be exon 4. Should have 7 exons."""
+        """Test 2: AT1G01020.4 at pos 426 should be exon 4. Should have 7 exons."""
         query_transcript = "AT1G01020.4"
         query_position = 426
         exon_number, total_exons = query_transcript_exon(transcript_dict, query_transcript, query_position)
-        print("AT1G01020.4 should have 7 exons and position 426 should be exon 4")
+        print(f"{query_transcript} should have {total_exons} exons and position {query_position} should be exon {exon_number}")
         if exon_number is not None:
             print(f'Transcript {query_transcript} position {query_position} is in exon {exon_number}.')
             print(f'Transcript {query_transcript} has {total_exons} exons.')
         else:
             print(f'Position {query_position} is not found in transcript {query_transcript}.')
         self.assertEqual(exon_number, 4)
-        self.assertEqual(total_exons, 7)
+        self.assertEqual(total_exons, transcript_exon_counts[query_transcript])
 
     def test_dict_3(self):
-        """Test 3: AT1G01020 at pos 860 should be exon 7. Should have 7 exons."""
+        """Test 3: AT1G01020.4 at pos 860 should be exon 6. Should have 7 exons. NEGATIVE CODING GENE. DIFF TRANSCRIPT"""
         query_transcript = "AT1G01020.4"
         query_position = 860
         exon_number, total_exons = query_transcript_exon(transcript_dict, query_transcript, query_position)
-        print("AT1G01020.4 should have 7 exons and position 860 should be exon 7")
+        print(f"{query_transcript} should have {total_exons} exons and position {query_position} should be exon {exon_number}")
         if exon_number is not None:
             print(f'Transcript {query_transcript} position {query_position} is in exon {exon_number}.')
             print(f'Transcript {query_transcript} has {total_exons} exons.')
         else:
             print(f'Position {query_position} is not found in transcript {query_transcript}.')
-        self.assertEqual(exon_number, 7)
-        self.assertEqual(total_exons, 7)
+        self.assertEqual(exon_number, 6)
+        self.assertEqual(total_exons, transcript_exon_counts[query_transcript])
 
     def test_dict_4(self):
-        """Test 4: AT1G01020 at pos 861 should BREAK. Should have 7 exons."""
+        """Test 4: AT1G01020.4 at pos 1550 should BREAK. Should have 7 exons."""
         query_transcript = "AT1G01020.4"
-        query_position = 861
+        query_position = 1550
         exon_number, total_exons = query_transcript_exon(transcript_dict, query_transcript, query_position)
-        print("AT1G01020.4 should have 7 exons and position 861 should BREAK!!!")
+        print(f"{query_transcript} should have {total_exons} exons and position {query_position} should BREAK")
         if exon_number is not None:
             print(f'Transcript {query_transcript} position {query_position} is in exon {exon_number}.')
             print(f'Transcript {query_transcript} has {total_exons} exons.')
         else:
             print(f'Position {query_position} is not found in transcript {query_transcript}.')
         self.assertIsNone(exon_number)
+        self.assertEqual(total_exons, transcript_exon_counts[query_transcript])
 
 if __name__ == '__main__':
     unittest.main()
