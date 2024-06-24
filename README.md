@@ -30,5 +30,19 @@ to test
 
 pip install numpy matplotlib pandas nose nose2
 
+```
 
+# what does this do and how
+
+1) this parses a gft fie (tested) gff3 (not yet tested) and sets up a LARGE dictionary of transcript exon number to
+coordinates for the nucleotide sequence.  For exmaple:
+
+AT1G01020.4 exon 2: [283, 284, 285]
+
+In the gtf, the cooridnates are genomic locations, these dont directly help when mapping to the transcriptome. 
+
+```bash
+python interogate_m6anet.py
+
+```
 

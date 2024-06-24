@@ -2,28 +2,106 @@
 #
 # .py
 import os
+import sys
+import shutil
+import errno
+import time
+import argparse
 from collections import defaultdict
+import logging
+import logging.handlers
+import argparse
 import matplotlib.pyplot as plt
 from interogate.parse_gtf import parse_gff_gft
 from interogate.return_dict import generate_transcript_coordinates
 
 
+def get_args():
+    parser = argparse.ArgumentParser(description="m6anet interogater:  " +
+                                     "data for methylation ",
+                                     add_help=False)
+    file_directory = os.path.realpath(__file__).split("interogate_m6anet.py")[0]                        
+    optional = parser.add_argument_group('optional arguments')
+    optional.add_argument("--thread", dest='threads',
+                          action="store", default="1",
+                          type=str,
+                          help="number of threads: currently does nothing yet")
+    
+    optional.add_argument("-o", "--out", dest='out',
+                          action="store",
+                          default="temp.out",
+                          type=str,
+                          help="outfile name")
+        
+    optional.add_argument("--gtf", dest='gtf',
+                          action="store",
+                          default=os.path.join(file_directory, "data", 
+                                               "test.gtf"),
+                          type=str,
+                          help="input gtf file to get the transcript coordinates")
+    
+    optional.add_argument("-l", "--logfile", dest='logfile',
+                          action="store",
+                          default="pipeline.log",
+                          type=str,
+                          help="log file name")
+    
+    return parser.parse_args()
+    
+
+def main():
+    args = get_args()
+
+    # Set up logging
+    logger = logging.getLogger('interogate_m6anet')
+    logger.setLevel(logging.DEBUG)
+    err_handler = logging.StreamHandler(sys.stderr)
+    err_formatter = logging.Formatter('%(levelname)s: %(message)s')
+    err_handler.setFormatter(err_formatter)
+    logger.addHandler(err_handler)
+
+    try:
+        logstream = open(args.logfile, 'w')
+        err_handler_file = logging.StreamHandler(logstream)
+        err_handler_file.setFormatter(err_formatter)
+        # logfile is always verbose
+        err_handler_file.setLevel(logging.INFO)
+        logger.addHandler(err_handler_file)
+    except:
+        logger.error(f"Could not open {args.logfile} for logging")
+        sys.exit(1)
+
+    # Report input arguments
+    logger.info(sys.version_info)
+    logger.info("Command-line: %s", ' '.join(sys.argv))
+    logger.info("Starting processing: %s", time.asctime())
+
+    # Example usage
+    logger.info("Starting processing: %s", args.gtf )
+    file_path = args.gtf  # Replace with the path to your GFF or GTF file
+    features = parse_gff_gft(file_path)
+    transcript_dict = generate_transcript_coordinates(features)
+
+    with open(args.out, 'w') as out_file:
+        for transcript, exons in transcript_dict.items():
+            for exon, coordinates in exons.items():
+                out_data = f'{transcript} exon {exon}: {coordinates}'
+                out_file.write(out_data + '\n')
+                print(out_data)
+
+    logger.info("Processing finished: %s", time.asctime())
+
+if __name__ == '__main__':
+    main()
 
 
+    for transcript, exons in transcript_dict.items():
+        for exon, coordinates in exons.items():
+            out_data = (f'{transcript} exon {exon}: {coordinates}')
+            print(out_data)
 
-# Example usage:
-file_path = 'data/test.gtf'  # Replace with the path to your GFF or GTF file
-features = parse_gff_gft(file_path)
-
-
-transcript_dict = generate_transcript_coordinates(features)
-
-for transcript, exons in transcript_dict.items():
-    for exon, coordinates in exons.items():
-        out_data = (f'{transcript} exon {exon}: {coordinates}')
-        print(out_data)
-
-TEST = '''
+    TEST = '''
+print("These are now in the nose2 tests")
 ###############################
 # TESTS
 # Query example
