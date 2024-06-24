@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 
 def parse_gff_gft(file_path):

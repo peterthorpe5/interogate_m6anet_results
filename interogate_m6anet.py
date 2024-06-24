@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 #
-# .py
+# interogate_m6anet.py 
+
 import os
 import sys
 import shutil
@@ -12,8 +13,10 @@ import logging
 import logging.handlers
 import argparse
 import matplotlib.pyplot as plt
+import pandas as pd
 from interogate.parse_gtf import parse_gff_gft
 from interogate.return_dict import generate_transcript_coordinates
+from interogate.parse_m6a_site_proba import identify_methylated_sites, query_transcript_exon
 
 
 def get_args():
@@ -22,6 +25,16 @@ def get_args():
                                      add_help=False)
     file_directory = os.path.realpath(__file__).split("interogate_m6anet.py")[0]                        
     optional = parser.add_argument_group('optional arguments')
+
+    optional.add_argument("--m6a", dest='m6a',
+                          action="store",
+                          nargs='+',  # This allows multiple arguments
+                          required=True,
+                          default=os.path.join(file_directory, "data", 
+                                               "test.site_proba.csv"),
+                          type=str,
+                          help="List of m6anet result files to be parsed e.g. --m6a file1.csv file2.csv file3.csv")
+ 
     optional.add_argument("--thread", dest='threads',
                           action="store", default="1",
                           type=str,
@@ -86,8 +99,54 @@ def main():
         for transcript, exons in transcript_dict.items():
             for exon, coordinates in exons.items():
                 out_data = f'{transcript} exon {exon}: {coordinates}'
-                out_file.write(out_data + '\n')
-                print(out_data)
+                #out_file.write(out_data + '\n')
+    
+    # load m6anet data
+    for m6a_file in args.m6a:
+        logger.info("Starting processing: %s",  args.m6a)
+        m6a_site_proba = m6a_file  # Replace with your actual file path
+        threshold = 0.9
+
+        methylated_sites = identify_methylated_sites(m6a_site_proba, 
+                                                     threshold)
+        print(methylated_sites)
+               # Determine exon/UTR location for each methylation site
+        results = []
+        for index, row in methylated_sites.iterrows():
+            transcript_id = row['transcript_id']
+            position = row['transcript_position']
+            exon_number, total_exons = query_transcript_exon(transcript_dict, 
+                                                             transcript_id, 
+                                                             position)
+            if exon_number is not None:
+                result = {
+                    'transcript_id': transcript_id,
+                    'position': position,
+                    'exon_number': exon_number,
+                    'total_exons': total_exons
+                }
+            else:
+                result = {
+                    'transcript_id': transcript_id,
+                    'position': position,
+                    'exon_number': 'UTR',
+                    'total_exons': total_exons
+                }
+            results.append(result)
+
+        results_df = pd.DataFrame(results)
+
+        # Print and save the result
+        output_file = f"{os.path.splitext(m6a_file)[0]}_exon_annotated.tab"
+        results_df.to_csv(output_file, index=False, sep="\t")
+        print(f"Results saved to {output_file}")
+
+
+    # Save the result to a file if needed
+    output_file = 'methylated_sites_above_threshold.tab'
+    methylated_sites.to_csv(output_file, index=False, sep="\t")
+    print(f"Methylated sites saved to {output_file}")
+
 
     logger.info("Processing finished: %s", time.asctime())
 
@@ -95,11 +154,10 @@ if __name__ == '__main__':
     main()
 
 
-    for transcript, exons in transcript_dict.items():
-        for exon, coordinates in exons.items():
-            out_data = (f'{transcript} exon {exon}: {coordinates}')
-            print(out_data)
 
+
+
+################################
     TEST = '''
 print("These are now in the nose2 tests")
 ###############################

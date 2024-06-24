@@ -36,17 +36,11 @@ def generate_transcript_coordinates(features):
                 exon_counters[transcript_id] += 1  # Increment exon counter
                 exon_number = exon_counters[transcript_id]  # Current exon number
                 
-                if strand == '+':
-                    for pos in range(start, end + 1):
-                        transcript_dict[transcript_id][exon_number].append(exon_nucleotide_counters[transcript_id] + 1)
-                        exon_nucleotide_counters[transcript_id] += 1
-                else:  # For negative strand -  need to count backwards
-                    for pos in range(end, start - 1, -1):
-                        transcript_dict[transcript_id][exon_number].append(exon_nucleotide_counters[transcript_id] + 1)
-                        exon_nucleotide_counters[transcript_id] += 1
+                for pos in range(start, end + 1):
+                    transcript_dict[transcript_id][exon_number].append(exon_nucleotide_counters[transcript_id] + 1)
+                    exon_nucleotide_counters[transcript_id] += 1
     
     return transcript_dict
-
 
 
 def query_transcript_exon(transcript_dict, transcript_id, position):
