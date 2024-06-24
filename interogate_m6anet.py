@@ -19,7 +19,7 @@ from interogate.return_dict import generate_transcript_coordinates
 from interogate.parse_m6a_site_proba import identify_methylated_sites, query_transcript_exon
 from interogate.plot import plot_methylation_distribution
 
-
+print(" ...   libs loaded ...")
 
 def get_args():
     parser = argparse.ArgumentParser(description="m6anet interogater:  " +

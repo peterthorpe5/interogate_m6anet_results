@@ -12,7 +12,8 @@ def parse_gff_gft(file_path):
     list: A list of tuples, each containing the fields of a feature.
     """
     features = []
-    with open(file_path, 'r') as file:
+    # weird error occur in the gtf file .. so this to get around it. 
+    with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
         for line in file:
             # Skip comment lines
             if line.startswith('#'):
